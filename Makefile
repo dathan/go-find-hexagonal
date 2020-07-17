@@ -1,7 +1,7 @@
 # Go parameters
-BINARY_NAME=example
+BINARY_NAME=go-find
 BINARY_UNIX=$(BINARY_NAME)_unix
-REPO=dathanvp/go-project-template
+REPO=dathanvp/go-find-hexagonal
 
 .PHONY: all
 all: lint test build

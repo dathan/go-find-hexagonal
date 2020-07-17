@@ -1,6 +1,10 @@
 ## Purpose
 
-Build a template repository to get to coding as quickly as possible, by starting from a common template which follows the guidelines [`here`](https://github.com/golang-standards/project-layout)
+Use the formal hexagonal architecture definition of DDD presented 
+https://www.youtube.com/watch?v=oL6JBUk6tj0
+by
+Kat Zien
+
 
 ## Features
 * Makefile to build consistently in a local environment and remote environment
@@ -10,9 +14,28 @@ Build a template repository to get to coding as quickly as possible, by starting
 * Generic docker push
 
 ## TODO
-* Brew generic install [DONE]
-* GITHUB Actions build and push to dockerhub [DONE]
-* Production Builds with git tag
 
-## Installing via brew
-* `brew install --verbose --build-from-source brew/Formula/go-project-template.rb`
+* Context: find things on the file system
+* Language: files, directories, paths, file-system, storage, blocks, inodes
+* Entities: Directories, Files, Paths
+* Value Objects: ???
+* Aggregates: Results
+* Events: Files, file does not exist, permission not valid,...
+* Repository: ???
+
+
+
+DDD:
+Establish your domain and domain logic
+Define your bounded context(s), the model within each context and the ubiquitous
+language
+Categorising the building block of your system
+* Entity
+* Value Object
+* Domain Event
+* Aggregate 
+* Service 
+* Repository
+* Factory
+
+
