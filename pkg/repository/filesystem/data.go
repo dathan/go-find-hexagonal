@@ -9,17 +9,17 @@ import (
 )
 
 // FileSystemRepository is a struct to the backend which performs the find - the filesystem
-type FilesytemRepository struct {
+type Repository struct {
 }
 
 // NewFileSystemRespository  returns the struct
-func NewFileSystemRepository() *FilesytemRepository {
-	ret := &FilesytemRepository{}
+func NewRepository() *Repository {
+	ret := &Repository{}
 	return ret
 }
 
 // Implements the repository interface
-func (f *FilesytemRepository) Find(fo find.FilterOptions) (find.FindResults, error) {
+func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 	path := fo.GetStart()
 
 	findResults := find.FindResults{}

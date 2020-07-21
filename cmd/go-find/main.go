@@ -37,7 +37,7 @@ func main() {
 	fileSystemFilter = filter.NewGenericOptions(".").SetFilterFunc(fFunc)
 
 	// this will not compile if the package did not implement the inteface.
-	repository = filesystem.NewFileSystemRepository()
+	repository = filesystem.NewRepository()
 
 	fAbj = find.New(repository)
 

@@ -29,12 +29,12 @@ func Test_filesytemRepository_Find(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		f       FilesytemRepository
+		f       Repository
 		args    args
 		want    int
 		wantErr bool
 	}{
-		{"currentfiles", FilesytemRepository{}, testWalk, 2, false},
+		{"currentfiles", Repository{}, testWalk, 2, false},
 	}
 
 	for _, tt := range tests {
