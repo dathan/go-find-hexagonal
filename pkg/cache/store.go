@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"time"
+
 	"github.com/davecheney/errors"
 	"github.com/philippgille/gokv/bbolt"
 )
@@ -15,8 +17,15 @@ type Store interface {
 	Close() error
 }
 
-type LRUCache struct {
+const cacheDelta = 3600
+
+type StoreCache struct {
 	db bbolt.Store
+}
+
+type TimeDeltaCache struct {
+	orig  interface{}
+	start time.Time
 }
 
 func NewService() (Store, error) {
@@ -27,7 +36,7 @@ func NewService() (Store, error) {
 		return nil, errors.Annotate(err, "cache.NewService()")
 	}
 
-	lCache := &LRUCache{
+	lCache := &StoreCache{
 		db: bdb,
 	}
 
@@ -37,20 +46,36 @@ func NewService() (Store, error) {
 
 }
 
-func (cache *LRUCache) Set(k string, v interface{}) error {
-	return cache.db.Set(k, v)
+func (cache *StoreCache) Set(k string, v interface{}) error {
+	lru := TimeDeltaCache{
+		orig:  v,
+		start: time.Now(),
+	}
+	return cache.db.Set(k, lru)
 }
 
-func (cache *LRUCache) Close() error {
+func (cache *StoreCache) Close() error {
 	return cache.db.Close()
 }
 
-func (cache *LRUCache) Delete(k string) error {
+func (cache *StoreCache) Delete(k string) error {
 	return cache.db.Delete(k)
 }
 
 // note v is an pointer so the type is changed to the value of the object past assuming its the same type
-func (cache *LRUCache) Get(k string, v interface{}) (bool, error) {
+func (cache *StoreCache) Get(k string, v interface{}) (bool, error) {
 	// TODO put LRU logic here for the get (we will purge on selects :) )
-	return cache.db.Get(k, v)
+	lru := TimeDeltaCache{}
+
+	ok, err := cache.db.Get(k, lru)
+	if err != nil {
+		return false, err
+	}
+
+	if time.Now().Unix()-lru.start.Unix() > cacheDelta {
+		return false, nil
+	}
+
+	return ok, err
+
 }
