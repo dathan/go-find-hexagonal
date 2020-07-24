@@ -9,6 +9,8 @@
 *.bin
 .*.un*
 .*.sw*
+*.db
+
 
 # Test binary, build with `go test -c`
 *.test
@@ -23,3 +25,4 @@ vendor
 api
 bin
 bin/*
+

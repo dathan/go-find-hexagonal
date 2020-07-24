@@ -27,8 +27,8 @@ func TestRepository_Find(t *testing.T) {
 	}
 
 	// set the filter func to find the specific files
-	var filterInfo find.FilterOptions
-	filterInfo = filter.NewGenericOptions(".").SetFilterFunc(fFunc)
+	//var filterInfo find.FilterOptions
+	filterInfo := filter.NewGenericOptions("dathanvp").SetFilterFunc(fFunc)
 
 	type args struct {
 		fo find.FilterOptions
@@ -41,6 +41,7 @@ func TestRepository_Find(t *testing.T) {
 	}{
 		{"default", args{filterInfo}, find.FindResults{}, false},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &Repository{}
