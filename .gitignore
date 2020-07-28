@@ -26,4 +26,5 @@ api
 bin
 bin/*
 
+BadgerDB
 BadgerDB/*
