@@ -75,8 +75,9 @@ func (tFav *TwitterFavorites) List(twitterHandle string) (Tweets, error) {
 	}
 
 	maxID := int64(0)
+	page := 0
 	for {
-
+		page++
 		options := &twitter.FavoriteListParams{ScreenName: twitterHandle, IncludeEntities: twitter.Bool(true)}
 		// set the pagination
 		if maxID != 0 {
@@ -87,7 +88,9 @@ func (tFav *TwitterFavorites) List(twitterHandle string) (Tweets, error) {
 		tweets, _, err := tFav.parent.client.Favorites.List(options)
 		if tweets == nil || err != nil {
 			if err != nil {
-				fmt.Printf("What is this error: %s\n", err)
+				if len(allTweets) == 0 {
+					return nil, err
+				}
 			}
 			break
 		}
@@ -101,6 +104,11 @@ func (tFav *TwitterFavorites) List(twitterHandle string) (Tweets, error) {
 		}
 
 		maxID = tweets[len(tweets)-1].ID // returns the result less than this id so we don't need to subtract
+		fmt.Printf("PAGE: %d Size: %d \n", page, len(allTweets))
+
+		if page > 2 {
+			break
+		}
 	}
 
 	if err := tFav.cache.Set(key, allTweets); err != nil {

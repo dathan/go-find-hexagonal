@@ -6,6 +6,10 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+type TestThing struct {
+	Name string
+}
+
 func TestNewService(t *testing.T) {
 
 	store, err := NewService()
@@ -13,6 +17,8 @@ func TestNewService(t *testing.T) {
 		t.Errorf("Error with NewService(): %s", err)
 		t.Fail()
 	}
+
+	testStruct := TestThing{"testStruct"}
 
 	tests := []struct {
 		name    string
@@ -24,23 +30,15 @@ func TestNewService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewService()
+			got := store
+			err := got.Set("defaultInfoxxx", testStruct)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewService() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			err = got.Set("defaultInfo", tests)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewService() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			tInfo := []struct {
-				name    string
-				want    Store
-				wantErr bool
-			}{}
 
-			found, err := got.Get("defaultInfo", tInfo)
+			var tInfo TestThing
+			found, err := got.Get("defaultInfoxxx", &tInfo)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewService() error = %v, wantErr %v", err, tt.wantErr)
 				return

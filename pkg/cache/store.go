@@ -1,10 +1,11 @@
 package cache
 
 import (
+	"sync"
 	"time"
 
 	"github.com/davecheney/errors"
-	"github.com/philippgille/gokv/bbolt"
+	"github.com/philippgille/gokv/badgerdb"
 )
 
 // we could use a type alias instead of redefine the interface but we are not migrating a package
@@ -20,38 +21,47 @@ type Store interface {
 const cacheDelta = 3600
 
 type StoreCache struct {
-	db bbolt.Store
+	db  *badgerdb.Store
+	mux sync.Mutex
 }
 
+var singleBadgerDB *badgerdb.Store
+
 type TimeDeltaCache struct {
-	orig  interface{}
-	start time.Time
+	Orig  interface{}
+	Start time.Time
 }
 
 func NewService() (Store, error) {
 	// use bolt db as the db
-	options := bbolt.Options{}
-	bdb, err := bbolt.NewStore(options) // use default settings todo fix
-	if err != nil {
-		return nil, errors.Annotate(err, "cache.NewService()")
+	var mux sync.Mutex
+	mux.Lock()
+	defer mux.Unlock()
+
+	options := badgerdb.Options{}
+	if singleBadgerDB == nil {
+		bdb, err := badgerdb.NewStore(options) // use default settings todo fix
+		if err != nil {
+			return nil, errors.Annotate(err, "cache.NewService()")
+		}
+		singleBadgerDB = &bdb
 	}
 
 	lCache := &StoreCache{
-		db: bdb,
+		db: singleBadgerDB,
 	}
 
-	defer lCache.Close()
+	//defer lCache.Close()
 
 	return lCache, nil
 
 }
 
 func (cache *StoreCache) Set(k string, v interface{}) error {
-	lru := TimeDeltaCache{
-		orig:  v,
-		start: time.Now(),
-	}
-	return cache.db.Set(k, lru)
+	cache.mux.Lock()
+	defer cache.mux.Unlock()
+	tC := &TimeDeltaCache{v, time.Now()}
+	return cache.db.Set(k, tC)
 }
 
 func (cache *StoreCache) Close() error {
@@ -59,20 +69,26 @@ func (cache *StoreCache) Close() error {
 }
 
 func (cache *StoreCache) Delete(k string) error {
+	cache.mux.Lock()
+	defer cache.mux.Unlock()
 	return cache.db.Delete(k)
 }
 
 // note v is an pointer so the type is changed to the value of the object past assuming its the same type
 func (cache *StoreCache) Get(k string, v interface{}) (bool, error) {
+	cache.mux.Lock()
+	defer cache.mux.Unlock()
 	// TODO put LRU logic here for the get (we will purge on selects :) )
-	lru := TimeDeltaCache{}
+	tDCache := &TimeDeltaCache{
+		Orig: v, // ensure the v is here so its the right type that gets set by reference
+	}
 
-	ok, err := cache.db.Get(k, lru)
+	ok, err := cache.db.Get(k, tDCache)
 	if err != nil {
 		return false, err
 	}
 
-	if time.Now().Unix()-lru.start.Unix() > cacheDelta {
+	if time.Now().Unix()-tDCache.Start.Unix() > cacheDelta {
 		return false, nil
 	}
 
