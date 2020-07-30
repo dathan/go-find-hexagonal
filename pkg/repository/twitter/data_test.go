@@ -17,11 +17,12 @@ import (
 func TestRepository_Find(t *testing.T) {
 
 	var fFunc find.FilterFunc = func(fr *find.FindResult) bool {
-		if fr != nil && strings.Contains(fr.Name, "golang") {
-			//fmt.Printf("fr.Name: %s contains golang\n", fr.Name)
+		if fr != nil && strings.Contains(fr.Name, "golang") || strings.Contains(fr.Extra, "golang") {
+			fmt.Printf("fr.Name: %s contains golang\n", fr.Name)
 			return true
 		}
-		fmt.Printf("fr.Name: %s contains golang\n", fr.Name)
+
+		//fmt.Printf("FALSE - fr.Name: %s contains golang: %v\n", fr.Name, fr)
 
 		return false
 	}

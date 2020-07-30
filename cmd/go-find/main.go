@@ -11,40 +11,70 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/dathan/go-find-hexagonal/pkg/filter"
 	"github.com/dathan/go-find-hexagonal/pkg/find"
 	"github.com/dathan/go-find-hexagonal/pkg/repository/filesystem"
+	"github.com/dathan/go-find-hexagonal/pkg/repository/twitter"
+	"github.com/dathan/go-find-hexagonal/pkg/ui"
 )
 
 func main() {
 
+	// flags
+	var root string
+	var name string
+	var findType string
+
+	flag.StringVar(&root, "root", "", "depending on the type search filesystem names or twitter handle favorites")
+	flag.StringVar(&name, "name", "", "giving a name look for that from the root")
+	flag.StringVar(&findType, "type", "twitter", "twitter or filesystem finds")
+	flag.Parse()
+
 	// let compiler know know that your using an interface
-	var fileSystemFilter find.FilterOptions
+	var filterOpt find.FilterOptions
 	var repository find.Repository
 	var fAbj find.Find
 
 	// ensure that FilterFunc filters out the things your looking for
 	var fFunc find.FilterFunc = func(fr *find.FindResult) bool {
-		if fr != nil && fr.Name == "filesystem.go" {
+
+		if name == "" {
 			return true
 		}
+
+		if fr != nil && strings.Contains(fr.Name, name) || strings.Contains(fr.Extra, name) {
+			return true
+		}
+		//fmt.Printf("RESULT for : [%s] is not correct: %+v\n", name, fr)
 		return false
 	}
 
 	// set the filter func to find the specific files
-	fileSystemFilter = filter.NewGenericOptions(".").SetFilterFunc(fFunc)
+	filterOpt = filter.NewGenericOptions(root).SetFilterFunc(fFunc)
 
 	// this will not compile if the package did not implement the inteface.
-	repository = filesystem.NewRepository()
+	switch findType {
+	case "twitter":
+		repository = twitter.NewRepository()
+	default:
+		repository = filesystem.NewRepository()
+	}
 
+	fmt.Printf("Looking for Name: (%s) in Respository: %s\n", name, findType)
+	// find the result in the repository
 	fAbj = find.New(repository)
+	fr, err := fAbj.Do(filterOpt)
 
-	fr, err := fAbj.Do(fileSystemFilter)
 	if err != nil {
 		fmt.Printf("ERROR: %s\n", err)
 	}
-	fmt.Println(fr)
+
+	if err := ui.Display(fr); err != nil {
+		panic(err)
+	}
 
 }

@@ -25,7 +25,7 @@ clean:
 
 .PHONY: run
 run:
-				go run ./cmd/$(BINARY_NAME)/*.go
+				go run ./cmd/$(BINARY_NAME)/*.go -name="golang" -type=twitter -root=dathanvp
 
 .PHONY: vendor
 vendor:

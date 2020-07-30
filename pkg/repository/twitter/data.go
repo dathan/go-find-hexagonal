@@ -32,22 +32,30 @@ func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 	var res find.FindResults
 	for _, tweet := range allTweets {
 
-		path := "n/a"
+		path := "https://twitter.com/i/web/status/" + tweet.IDStr
 		lenUrls := len(tweet.Entities.Urls)
 
 		if lenUrls > 0 {
-			path = ""
-			for pos, url := range tweet.Entities.Urls {
-				sep := ""
-				if pos > 0 && lenUrls > 1 && pos != lenUrls-1 {
-					sep = ":"
+			for _, urlStruct := range tweet.Entities.Urls {
+				if path != urlStruct.ExpandedURL {
+					path += "\n\n" + urlStruct.ExpandedURL
 				}
-				path = path + sep + url.ExpandedURL
 			}
 		}
 
+		t, err := tweet.CreatedAtTime()
+		if err != nil {
+			return nil, err
+		}
+
 		// Find Keywords in the Result - this is equivalent to finding a pattern in the filename
-		fResult := find.FindResult{Name: tweet.FullText, Path: path}
+		fResult := find.FindResult{
+			Name:      tweet.Text,
+			Extra:     tweet.FullText,
+			Path:      path,
+			CreatedAt: t.Unix(),
+		}
+
 		if fo.GetFilterFunc()(&fResult) {
 			res = append(res, fResult)
 		}

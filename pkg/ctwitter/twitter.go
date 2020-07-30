@@ -10,6 +10,8 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+const MAX_PAGES = 20
+
 type TwitterFavorites struct {
 	parent *Twitter
 	cache  cache.Store
@@ -68,9 +70,9 @@ func (tFav *TwitterFavorites) List(twitterHandle string) (Tweets, error) {
 	}
 
 	allTweets := Tweets{}
-	ok, err := tFav.cache.Get(key, allTweets)
+	ok, err := tFav.cache.Get(key, &allTweets)
 	if err == nil && ok {
-		fmt.Printf("RETURNING CACHE")
+		//fmt.Printf("RETURNING CACHE: %v\n", allTweets)
 		return allTweets, nil
 	}
 
@@ -78,7 +80,7 @@ func (tFav *TwitterFavorites) List(twitterHandle string) (Tweets, error) {
 	page := 0
 	for {
 		page++
-		options := &twitter.FavoriteListParams{ScreenName: twitterHandle, IncludeEntities: twitter.Bool(true)}
+		options := &twitter.FavoriteListParams{ScreenName: twitterHandle, SinceID: 0, Count: 200, IncludeEntities: twitter.Bool(true)}
 		// set the pagination
 		if maxID != 0 {
 			options.MaxID = maxID
@@ -95,18 +97,24 @@ func (tFav *TwitterFavorites) List(twitterHandle string) (Tweets, error) {
 			break
 		}
 
+		if len(tweets) == 0 {
+			break
+		}
+
+		tSize := len(tweets)
+		fmt.Printf("ArrayRange [%d]: %d N: %d LEN: %d\n", maxID, tweets[0].ID, tweets[tSize-1].ID, len(tweets))
+
 		//return all the tweets to the result filter.
 		allTweets = append(allTweets, tweets...)
 
 		// if there is a cycle
-		if maxID > 0 && maxID == tweets[len(tweets)-1].ID {
+		if maxID > 0 && maxID == tweets[tSize-1].ID {
 			break
 		}
 
-		maxID = tweets[len(tweets)-1].ID // returns the result less than this id so we don't need to subtract
-		fmt.Printf("PAGE: %d Size: %d \n", page, len(allTweets))
+		maxID = tweets[tSize-1].ID
 
-		if page > 2 {
+		if page > MAX_PAGES {
 			break
 		}
 	}

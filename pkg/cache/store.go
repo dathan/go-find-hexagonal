@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"reflect"
 	"sync"
 	"time"
 
@@ -58,9 +59,12 @@ func NewService() (Store, error) {
 }
 
 func (cache *StoreCache) Set(k string, v interface{}) error {
+
 	cache.mux.Lock()
 	defer cache.mux.Unlock()
+
 	tC := &TimeDeltaCache{v, time.Now()}
+
 	return cache.db.Set(k, tC)
 }
 
@@ -89,9 +93,15 @@ func (cache *StoreCache) Get(k string, v interface{}) (bool, error) {
 	}
 
 	if time.Now().Unix()-tDCache.Start.Unix() > cacheDelta {
+		clear(&v)
 		return false, nil
 	}
 
 	return ok, err
 
+}
+
+func clear(v interface{}) {
+	p := reflect.ValueOf(v).Elem()
+	p.Set(reflect.Zero(p.Type()))
 }

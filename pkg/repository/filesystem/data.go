@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -43,15 +42,12 @@ func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 		fFunc := fo.GetFilterFunc()
 		if fFunc != nil && fFunc(&fResult) {
 			findResults = append(findResults, fResult)
-		} else {
-			fmt.Printf("Skipping this results :%v\n", fResult)
 		}
 
 		return nil
 	}
 
 	if err := filepath.Walk(path, walkFn); err != nil {
-		fmt.Printf("ERROR: filepath.Walk: %s\n", err)
 		return nil, err
 	}
 
