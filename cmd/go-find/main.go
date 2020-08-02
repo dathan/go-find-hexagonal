@@ -29,7 +29,7 @@ func main() {
 	var name string
 	var findType string
 
-	flag.StringVar(&root, "root", "", "depending on the type search filesystem names or twitter handle favorites")
+	flag.StringVar(&root, "root", "dathanvp", "depending on the type search filesystem names or twitter handle favorites")
 	flag.StringVar(&name, "name", "", "giving a name look for that from the root")
 	flag.StringVar(&findType, "type", "twitter", "twitter or filesystem finds")
 	flag.Parse()
