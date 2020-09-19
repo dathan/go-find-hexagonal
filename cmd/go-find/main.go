@@ -18,8 +18,9 @@ import (
 	"github.com/dathan/go-find-hexagonal/pkg/filter"
 	"github.com/dathan/go-find-hexagonal/pkg/find"
 	"github.com/dathan/go-find-hexagonal/pkg/repository/filesystem"
-	"github.com/dathan/go-find-hexagonal/pkg/repository/twitter"
+	twitter "github.com/dathan/go-find-hexagonal/pkg/repository/social"
 	"github.com/dathan/go-find-hexagonal/pkg/ui"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
@@ -49,6 +50,10 @@ func main() {
 		if fr != nil && strings.Contains(fr.Name, name) || strings.Contains(fr.Extra, name) {
 			return true
 		}
+
+		if fr != nil && fr.Source == "reddit" {
+			return true
+		}
 		//fmt.Printf("RESULT for : [%s] is not correct: %+v\n", name, fr)
 		return false
 	}
@@ -70,8 +75,10 @@ func main() {
 	fr, err := fAbj.Do(filterOpt)
 
 	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		panic(err)
 	}
+
+	spew.Dump(fr)
 
 	if err := ui.Display(fr); err != nil {
 		panic(err)
