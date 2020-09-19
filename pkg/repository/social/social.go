@@ -11,7 +11,6 @@ import (
 	"github.com/dathan/go-find-hexagonal/pkg/find"
 	reddit "github.com/dathan/go-find-hexagonal/pkg/social/reddit"
 	twitter "github.com/dathan/go-find-hexagonal/pkg/social/twitter"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/davecheney/errors"
 )
 
@@ -31,17 +30,24 @@ func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	results := make(chan find.FindResults)
-
+	results := make(chan find.FindResults, 2)
+	fatalErrors := make(chan error)
+	wgDone := make(chan bool)
 	// wait in a routine and close the results so this method returns
 	go func() {
 		wg.Wait()
 		close(results)
+		close(wgDone)
 	}()
 	/*
 		go func(results chan find.FindResults) {
 			defer wg.Done()
-			res, _ := f.twitterFind(fo)
+			res, err := f.twitterFind(fo)
+			if err != nil {
+				fmt.Printf("Error: %s\n", err)
+				fatalErrors <- err
+			}
+
 			results <- res
 		}(results)
 	*/
@@ -51,23 +57,33 @@ func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 		res, err := f.redditFind(fo)
 
 		if err != nil {
-			fmt.Printf("Error: %s\n", err)
+			fatalErrors <- err
 			return
 		}
 
+		fmt.Printf("about to write res to results\n")
 		results <- res
+		fmt.Printf("all done\n")
+
 	}(results)
 
-	var allResults find.FindResults
-	for res := range results {
-		spew.Dump(res)
-		if res != nil {
-			allResults = append(allResults, res...)
+	select {
+	case err := <-fatalErrors:
+		close(fatalErrors)
+		return nil, err
+	case <-wgDone:
+		fmt.Printf("all wgAreDone")
+		var allResults find.FindResults
+		for res := range results {
+			if res != nil {
+				allResults = append(allResults, res...)
+			}
 		}
+		fmt.Printf("Returning results: %d\n", len(allResults))
+		return allResults, nil
 	}
 
-	return allResults, nil
-
+	panic(errors.New("impossible error"))
 }
 
 func (f *Repository) redditFind(fo find.FilterOptions) (find.FindResults, error) {
@@ -86,8 +102,6 @@ func (f *Repository) redditFind(fo find.FilterOptions) (find.FindResults, error)
 
 	filteredResults := find.FindResults{}
 
-	spew.Dump(upVotes)
-
 	for _, vote := range upVotes {
 
 		fResult := find.FindResult{
@@ -104,6 +118,7 @@ func (f *Repository) redditFind(fo find.FilterOptions) (find.FindResults, error)
 
 	}
 
+	fmt.Printf("filteredResults: %d\n", len(filteredResults))
 	return filteredResults, nil
 }
 func (f *Repository) twitterFind(fo find.FilterOptions) (find.FindResults, error) {

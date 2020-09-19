@@ -54,7 +54,7 @@ func main() {
 				return true
 			}
 		*/
-		fmt.Printf("RESULT for : [%s] is not correct: %+v\n", name, fr)
+		//fmt.Printf("RESULT for : [%s] is not correct: %+v\n", name, fr)
 		return false
 	}
 
