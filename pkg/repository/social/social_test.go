@@ -2,7 +2,7 @@
 // store likes in a datastore,
 // search the datastore for link content when implementing the grep
 // note the difference between find and search
-package twitter
+package social
 
 import (
 	"fmt"

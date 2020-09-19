@@ -18,9 +18,8 @@ import (
 	"github.com/dathan/go-find-hexagonal/pkg/filter"
 	"github.com/dathan/go-find-hexagonal/pkg/find"
 	"github.com/dathan/go-find-hexagonal/pkg/repository/filesystem"
-	twitter "github.com/dathan/go-find-hexagonal/pkg/repository/social"
+	social "github.com/dathan/go-find-hexagonal/pkg/repository/social"
 	"github.com/dathan/go-find-hexagonal/pkg/ui"
-	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
@@ -32,7 +31,7 @@ func main() {
 
 	flag.StringVar(&root, "root", "dathanvp", "depending on the type search filesystem names or twitter handle favorites")
 	flag.StringVar(&name, "name", "", "giving a name look for that from the root")
-	flag.StringVar(&findType, "type", "twitter", "twitter or filesystem finds")
+	flag.StringVar(&findType, "type", "social", "Social Bookmarks lookup or filesystem finds")
 	flag.Parse()
 
 	// let compiler know know that your using an interface
@@ -50,11 +49,12 @@ func main() {
 		if fr != nil && strings.Contains(fr.Name, name) || strings.Contains(fr.Extra, name) {
 			return true
 		}
-
-		if fr != nil && fr.Source == "reddit" {
-			return true
-		}
-		//fmt.Printf("RESULT for : [%s] is not correct: %+v\n", name, fr)
+		/*
+			if fr != nil && fr.Source == "reddit" {
+				return true
+			}
+		*/
+		fmt.Printf("RESULT for : [%s] is not correct: %+v\n", name, fr)
 		return false
 	}
 
@@ -63,8 +63,8 @@ func main() {
 
 	// this will not compile if the package did not implement the inteface.
 	switch findType {
-	case "twitter":
-		repository = twitter.NewRepository()
+	case "social":
+		repository = social.NewRepository()
 	default:
 		repository = filesystem.NewRepository()
 	}
@@ -78,8 +78,8 @@ func main() {
 		panic(err)
 	}
 
-	spew.Dump(fr)
-
+	//spew.Dump(fr)
+	//panic("!!!")
 	if err := ui.Display(fr); err != nil {
 		panic(err)
 	}

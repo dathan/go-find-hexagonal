@@ -2,14 +2,14 @@
 // store likes in a datastore,
 // search the datastore for link content when implementing the grep
 // note the difference between find and search
-package twitter
+package social
 
 import (
 	"fmt"
 	"sync"
 
 	"github.com/dathan/go-find-hexagonal/pkg/find"
-	"github.com/dathan/go-find-hexagonal/pkg/social/reddit"
+	reddit "github.com/dathan/go-find-hexagonal/pkg/social/reddit"
 	twitter "github.com/dathan/go-find-hexagonal/pkg/social/twitter"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/davecheney/errors"
@@ -74,32 +74,37 @@ func (f *Repository) redditFind(fo find.FilterOptions) (find.FindResults, error)
 
 	service, err := reddit.NewService()
 	if err != nil {
-		fmt.Println(err)
-		return nil, errors.Wrap(err, errors.Errorf("redditFind service failed () "))
+		return nil, errors.Wrap(err, errors.Errorf("redditFind service failed () - %s ", err))
 	}
 
 	// only works because my handle is the same between platforms
 	upVotes, err := service.Favorites.CacheList(fo.GetStart())
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
-	allResults := find.FindResults{}
+	filteredResults := find.FindResults{}
 
 	spew.Dump(upVotes)
 
 	for _, vote := range upVotes {
-		allResults = append(allResults, find.FindResult{
+
+		fResult := find.FindResult{
 			Name:   vote.Title,
 			Path:   vote.FullPermalink(),
 			Extra:  vote.Selftext,
 			Source: "reddit",
-		})
+		}
+
+		// filterAllResults
+		if fo.GetFilterFunc()(&fResult) {
+			filteredResults = append(filteredResults, fResult)
+		}
+
 	}
 
-	return allResults, nil
+	return filteredResults, nil
 }
 func (f *Repository) twitterFind(fo find.FilterOptions) (find.FindResults, error) {
 	service, err := twitter.NewService()
