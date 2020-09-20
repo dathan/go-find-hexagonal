@@ -41,3 +41,10 @@ Categorizing the building block of your system
 * Service: Business logic sometimes would involve more than one different objects. When it doesn’t feel right to put a function in either object, we would use a service.
 
 
+#TODO
+
+* add context
+* add dynamic credential ask based on logged in user
+* add login system
+* add webui
+* refactor
