@@ -24,48 +24,28 @@ func NewRepository() *Repository {
 	return ret
 }
 
+const GO_SOCIAL_JOBS = 2
+
+var wg sync.WaitGroup
+
 // Implements the repository interface that concurrently pulls from Reddit and Twitter
 func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(GO_SOCIAL_JOBS)
 
-	results := make(chan find.FindResults, 2)
-	fatalErrors := make(chan error)
-	wgDone := make(chan bool)
+	results := make(chan find.FindResults, GO_SOCIAL_JOBS)
+	fatalErrors := make(chan error, GO_SOCIAL_JOBS) // even though we want only 1 error to stop we should avoid a deadlock
+	wgDone := make(chan bool)                       // nil channel to just close to indicate we are done
+
 	// wait in a routine and close the results so this method returns
 	go func() {
 		wg.Wait()
 		close(results)
 		close(wgDone)
 	}()
-	/*
-		go func(results chan find.FindResults) {
-			defer wg.Done()
-			res, err := f.twitterFind(fo)
-			if err != nil {
-				fmt.Printf("Error: %s\n", err)
-				fatalErrors <- err
-			}
 
-			results <- res
-		}(results)
-	*/
-	go func(results chan find.FindResults) {
-
-		defer wg.Done()
-		res, err := f.redditFind(fo)
-
-		if err != nil {
-			fatalErrors <- err
-			return
-		}
-
-		fmt.Printf("about to write res to results\n")
-		results <- res
-		fmt.Printf("all done\n")
-
-	}(results)
+	go f.redditConncurrent(fo, results, fatalErrors)
+	go f.twitterConncurrent(fo, results, fatalErrors)
 
 	select {
 	case err := <-fatalErrors:
@@ -83,9 +63,38 @@ func (f *Repository) Find(fo find.FilterOptions) (find.FindResults, error) {
 		return allResults, nil
 	}
 
-	panic(errors.New("impossible error"))
+	//panic(errors.New("impossible error"))
 }
 
+func (f *Repository) redditConncurrent(fo find.FilterOptions, results chan find.FindResults, fatalErrors chan error) {
+	defer wg.Done()
+	res, err := f.redditFind(fo)
+
+	if err != nil {
+		fatalErrors <- err
+		return
+	}
+
+	fmt.Printf("about to write res to results\n")
+	results <- res
+	fmt.Printf("all done\n")
+
+}
+
+func (f *Repository) twitterConncurrent(fo find.FilterOptions, results chan find.FindResults, fatalErrors chan error) {
+	defer wg.Done()
+	res, err := f.twitterFind(fo)
+
+	if err != nil {
+		fatalErrors <- err
+		return
+	}
+
+	fmt.Printf("about to write res to results\n")
+	results <- res
+	fmt.Printf("all done\n")
+
+}
 func (f *Repository) redditFind(fo find.FilterOptions) (find.FindResults, error) {
 
 	service, err := reddit.NewService()
